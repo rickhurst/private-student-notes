@@ -1,80 +1,92 @@
-document.addEventListener('DOMContentLoaded', function () {
-    // Get the form element and the editor content field
-    const form = document.getElementById('private-student-note-form');
-    
-    // Fetch the existing note content when the page loads
+import { useState, useEffect } from 'react';
+import { RichText } from '@wordpress/block-editor';
+import ReactDOM from 'react-dom';
+
+// Define the component
+const PrivateStudentNotesEditor = () => {
+  const [noteContent, setNoteContent] = useState('');
+  const [isLoading, setIsLoading] = useState(true); // Track loading state
+
+  // Fetch the saved note content when the component mounts
+  useEffect(() => {
+    // Fetch the saved note content from the REST API
     fetch('/wp-json/private-student-notes/v1/get-note', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'X-WP-Nonce': wpApiSettings.nonce, // Include nonce for authentication
+        'X-WP-Nonce': wpApiSettings.nonce, // Ensure the nonce is sent for security
       },
     })
       .then(response => response.json())
       .then(data => {
         if (data && data.note) {
-          // Wait for TinyMCE to initialize
-          if (typeof tinymce !== 'undefined') {
-            // Ensure TinyMCE is fully initialized before setting content
-            const editor = tinymce.activeEditor;
-            if (editor) {
-              console.log('got editor');
-              console.log(data.note);
-              //editor.on('init', function () {
-                console.log('init issit');
-                editor.setContent(data.note); // Set the fetched content into the editor
-              //});
-            } else {
-              console.error('TinyMCE active editor is not initialized.');
-            }
-          } else {
-            console.error('TinyMCE is not initialized.');
-          }
+          setNoteContent(data.note); // Set the fetched content into the state
         }
       })
       .catch(error => {
         console.error('Error fetching note:', error);
+      })
+      .finally(() => {
+        setIsLoading(false); // Stop loading once the data is fetched
       });
+  }, []); // Empty dependency array to run only on component mount
+
+  // Function to save the note to the server
+  const saveNoteToServer = (newContent) => {
+    fetch('/wp-json/private-student-notes/v1/save-note', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-WP-Nonce': wpApiSettings.nonce, // Nonce for security
+      },
+      body: JSON.stringify({
+        note: newContent,
+      }),
+    })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Note saved:', data);
+      })
+      .catch(error => {
+        console.error('Error saving note:', error);
+      });
+  };
+
+  if (isLoading) {
+    return <div>Loading...</div>; // Show loading text while fetching content
+  }
+
+  return (
+    <>
+      <RichText
+        tagName="div"
+        multiline="p"
+        value={noteContent}  // Use state value to manage content
+        onChange={(newContent) => {
+          setNoteContent(newContent);  // Update the state when content changes
+        }}
+        placeholder="Add your private note here..."
+        //allowedFormats={['core/bold', 'core/italic', 'core/link']}
+
+      />
+      <button 
+        onClick={() => saveNoteToServer(noteContent)} // Save when the button is clicked
+        className="save-note-button"
+      >
+        Save Note
+      </button>
+    </>
+  );
+};
+
+// Initialize the React component and render it in the placeholder element
+const renderEditor = () => {
+  const editorElement = document.getElementById('private-student-note-editor');
   
-    // Handle form submission
-    form.addEventListener('submit', function (e) {
-      e.preventDefault(); // Prevent default form submission behavior
-  
-      // Get the content from the active wp_editor (TinyMCE) field
-      const editor = tinymce.activeEditor;
-      if (editor) {
-        const noteContent = editor.getContent(); // Retrieve the editor content
-  
-        // Get the nonce from the wpApiSettings object
-        const nonce = wpApiSettings.nonce;
-  
-        // Prepare the data to send via AJAX
-        const data = {
-          note: noteContent
-        };
-  
-        // Send the data to the REST API endpoint via a POST request
-        fetch('/wp-json/private-student-notes/v1/save-note', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-WP-Nonce': nonce, // Add the nonce to the request headers
-          },
-          body: JSON.stringify(data),
-        })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              console.log('Note saved successfully!');
-            } else {
-              console.log('There was an error saving the note.');
-            }
-          })
-          .catch(error => {
-            console.error('Error:', error);
-            alert('There was an error saving the note.');
-          });
-      }
-    });
-  });
-  
+  if (editorElement) {
+    ReactDOM.render(<PrivateStudentNotesEditor />, editorElement); // Render the component into the placeholder element
+  }
+};
+
+// Trigger the rendering on page load
+window.addEventListener('load', renderEditor);
