@@ -55,30 +55,64 @@ const PrivateStudentNotesEditor = () => {
   };
 
   return (
-    <div>
+    <div style={styles.editorContainer}>
       {/* Toolbar */}
-      <div style={{ marginBottom: '10px' }}>
-        <button onClick={() => editor?.chain().focus().toggleBold().run()}><strong>B</strong></button>
-        <button onClick={() => editor?.chain().focus().toggleItalic().run()}><em>I</em></button>
-        <button onClick={() => editor?.chain().focus().toggleBulletList().run()}>• List</button>
+      <div style={styles.toolbar}>
+        <button style={styles.button} onClick={() => editor?.chain().focus().toggleBold().run()}><strong>B</strong></button>
+        <button style={styles.button} onClick={() => editor?.chain().focus().toggleItalic().run()}><em>I</em></button>
+        <button style={styles.button} onClick={() => editor?.chain().focus().toggleBulletList().run()}>• List</button>
       </div>
 
       {/* Editor */}
       <EditorContent
         editor={editor}
-        style={{
-          border: '1px solid #ccc',
-          minHeight: '300px',
-          padding: '10px',
-        }}
+        style={styles.editorContent}
       />
 
       {/* Save Button */}
-      <button onClick={saveNoteToServer} style={{ marginTop: '10px' }}>
+      <button onClick={saveNoteToServer} style={styles.button}>
         Save Note
       </button>
     </div>
   );
+};
+
+const styles = {
+    editorContainer: {
+        maxWidth: '600px',
+        margin: '0 auto',
+    },
+    toolbar: {
+        display: 'flex',
+        gap: '10px',
+        marginBottom: '10px',
+        marginTop: '10px',
+    },
+    button: {
+        backgroundColor: '#333',
+        color: '#fff',
+        border: 'none',
+        padding: '8px 12px',
+        cursor: 'pointer',
+        borderRadius: '4px',
+        fontWeight: 'bold',
+    },
+    editorContent: {
+        minHeight: '300px',
+        border: '1px solid #ccc',
+        padding: '10px',
+        borderRadius: '4px',
+    },
+    saveButton: {
+        backgroundColor: '#333',
+        color: '#fff',
+        border: 'none',
+        padding: '10px 15px',
+        cursor: 'pointer',
+        borderRadius: '4px',
+        marginTop: '10px',
+        fontWeight: 'bold',
+    },
 };
 
 // Render the React component in the placeholder

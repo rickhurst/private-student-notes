@@ -30206,39 +30206,72 @@ const PrivateStudentNotesEditor = () => {
     }).catch(error => console.error('Error saving note:', error));
   };
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("div", {
+    style: styles.editorContainer,
     children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("div", {
-      style: {
-        marginBottom: '10px'
-      },
+      style: styles.toolbar,
       children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("button", {
+        style: styles.button,
         onClick: () => editor?.chain().focus().toggleBold().run(),
         children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("strong", {
           children: "B"
         })
       }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("button", {
+        style: styles.button,
         onClick: () => editor?.chain().focus().toggleItalic().run(),
         children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("em", {
           children: "I"
         })
       }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("button", {
+        style: styles.button,
         onClick: () => editor?.chain().focus().toggleBulletList().run(),
         children: "\u2022 List"
       })]
     }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_tiptap_react__WEBPACK_IMPORTED_MODULE_7__.EditorContent, {
       editor: editor,
-      style: {
-        border: '1px solid #ccc',
-        minHeight: '300px',
-        padding: '10px'
-      }
+      style: styles.editorContent
     }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("button", {
       onClick: saveNoteToServer,
-      style: {
-        marginTop: '10px'
-      },
+      style: styles.button,
       children: "Save Note"
     })]
   });
+};
+const styles = {
+  editorContainer: {
+    maxWidth: '600px',
+    margin: '0 auto'
+  },
+  toolbar: {
+    display: 'flex',
+    gap: '10px',
+    marginBottom: '10px',
+    marginTop: '10px'
+  },
+  button: {
+    backgroundColor: '#333',
+    color: '#fff',
+    border: 'none',
+    padding: '8px 12px',
+    cursor: 'pointer',
+    borderRadius: '4px',
+    fontWeight: 'bold'
+  },
+  editorContent: {
+    minHeight: '300px',
+    border: '1px solid #ccc',
+    padding: '10px',
+    borderRadius: '4px'
+  },
+  saveButton: {
+    backgroundColor: '#333',
+    color: '#fff',
+    border: 'none',
+    padding: '10px 15px',
+    cursor: 'pointer',
+    borderRadius: '4px',
+    marginTop: '10px',
+    fontWeight: 'bold'
+  }
 };
 
 // Render the React component in the placeholder
