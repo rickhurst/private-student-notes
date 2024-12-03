@@ -30145,29 +30145,52 @@ var __webpack_exports__ = {};
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "react");
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _tiptap_react__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! @tiptap/react */ "./node_modules/@tiptap/react/dist/index.js");
+/* harmony import */ var _tiptap_react__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @tiptap/react */ "./node_modules/@tiptap/react/dist/index.js");
 /* harmony import */ var _tiptap_starter_kit__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @tiptap/starter-kit */ "./node_modules/@tiptap/starter-kit/dist/index.js");
-/* harmony import */ var _tiptap_extension_bold__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @tiptap/extension-bold */ "./node_modules/@tiptap/extension-bold/dist/index.js");
-/* harmony import */ var _tiptap_extension_italic__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @tiptap/extension-italic */ "./node_modules/@tiptap/extension-italic/dist/index.js");
-/* harmony import */ var _tiptap_extension_bullet_list__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @tiptap/extension-bullet-list */ "./node_modules/@tiptap/extension-bullet-list/dist/index.js");
-/* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! react-dom */ "react-dom");
-/* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(react_dom__WEBPACK_IMPORTED_MODULE_5__);
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__);
+/* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! react-dom */ "react-dom");
+/* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(react_dom__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__);
 
 
 
 
 
+// Icons for open/closed states (you can replace with SVGs or custom icons)
 
-
-
+const TriangleIcon = ({
+  isOpen
+}) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("span", {
+  style: {
+    display: 'inline-block',
+    transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+    transition: 'transform 0.3s',
+    marginRight: '8px'
+  },
+  children: "\u25B6"
+});
 const PrivateStudentNotesEditor = () => {
+  const [isOpen, setIsOpen] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(false);
+
+  // Restore state from localStorage on component mount
+  (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(() => {
+    const savedState = localStorage.getItem('privateStudentNotesOpen');
+    setIsOpen(savedState === 'true');
+  }, []);
+
+  // Save state to localStorage whenever it changes
+  (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(() => {
+    localStorage.setItem('privateStudentNotesOpen', isOpen);
+  }, [isOpen]);
+
   // Initialize the TipTap editor with desired extensions
-  const editor = (0,_tiptap_react__WEBPACK_IMPORTED_MODULE_7__.useEditor)({
-    extensions: [_tiptap_starter_kit__WEBPACK_IMPORTED_MODULE_1__["default"], _tiptap_extension_bold__WEBPACK_IMPORTED_MODULE_2__["default"], _tiptap_extension_italic__WEBPACK_IMPORTED_MODULE_3__["default"], _tiptap_extension_bullet_list__WEBPACK_IMPORTED_MODULE_4__["default"]],
+  const editor = (0,_tiptap_react__WEBPACK_IMPORTED_MODULE_4__.useEditor)({
+    extensions: [_tiptap_starter_kit__WEBPACK_IMPORTED_MODULE_1__["default"]],
     content: ''
   });
+  const toggleOpen = () => {
+    setIsOpen(!isOpen);
+  };
 
   // Fetch the saved note when the component loads
   (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(() => {
@@ -30179,7 +30202,7 @@ const PrivateStudentNotesEditor = () => {
       }
     }).then(response => response.json()).then(data => {
       if (data && data.note) {
-        editor?.commands.setContent(data.note); // Load note into the editor
+        editor?.commands.setContent(sanitizeNoteContent(data.note)); // Load note into the editor
       }
     }).catch(error => console.error('Error fetching note:', error));
   }, [editor]);
@@ -30195,7 +30218,7 @@ const PrivateStudentNotesEditor = () => {
         'X-WP-Nonce': wpApiSettings.nonce
       },
       body: JSON.stringify({
-        note: noteContent
+        note: sanitizeNoteContent(noteContent)
       })
     }).then(response => response.json()).then(data => {
       if (data.success) {
@@ -30205,40 +30228,118 @@ const PrivateStudentNotesEditor = () => {
       }
     }).catch(error => console.error('Error saving note:', error));
   };
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("div", {
+
+  // Sanitize function (you can move this to a separate file and import it)
+  const sanitizeNoteContent = content => {
+    const container = document.createElement('div');
+    container.innerHTML = content;
+    const allowedTags = ['P', 'EM', 'STRONG', 'UL', 'LI'];
+    const sanitizeNode = node => {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        if (!allowedTags.includes(node.tagName)) {
+          node.replaceWith(...node.childNodes);
+        } else {
+          while (node.attributes.length > 0) {
+            node.removeAttribute(node.attributes[0].name);
+          }
+        }
+      }
+      for (const child of Array.from(node.childNodes)) {
+        sanitizeNode(child);
+      }
+    };
+    sanitizeNode(container);
+    return container.innerHTML;
+  };
+
+  // Function to print the editor's content
+  const printEditorContent = () => {
+    if (!editor) return;
+    const contents = editor.getHTML(); // Get the editor content as HTML
+
+    const frame = document.createElement('iframe');
+    frame.style.position = 'absolute';
+    frame.style.top = '-10000px';
+    document.body.appendChild(frame);
+    const frameDoc = frame.contentWindow || frame.contentDocument.document || frame.contentDocument;
+    frameDoc.document.open();
+    frameDoc.document.write(`
+      <html>
+      <head>
+        <title>Print Note</title>
+        <style>
+          @page { size: auto; margin: 30px; }
+          body { font-family: Arial, sans-serif; padding: 20px; }
+        </style>
+      </head>
+      <body>${contents}</body>
+      </html>
+    `);
+    frameDoc.document.close();
+    setTimeout(() => {
+      frame.contentWindow.focus();
+      frame.contentWindow.print();
+      document.body.removeChild(frame);
+    }, 500);
+  };
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("div", {
     style: styles.editorContainer,
-    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("div", {
-      style: styles.toolbar,
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("button", {
-        style: styles.button,
-        onClick: () => editor?.chain().focus().toggleBold().run(),
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("strong", {
-          children: "B"
-        })
-      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("button", {
-        style: styles.button,
-        onClick: () => editor?.chain().focus().toggleItalic().run(),
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("em", {
-          children: "I"
-        })
-      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("button", {
-        style: styles.button,
-        onClick: () => editor?.chain().focus().toggleBulletList().run(),
-        children: "\u2022 List"
+    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("div", {
+      onClick: toggleOpen,
+      style: {
+        cursor: 'pointer',
+        padding: '10px',
+        backgroundColor: '#f5f5f5',
+        display: 'flex',
+        alignItems: 'center'
+      },
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)(TriangleIcon, {
+        isOpen: isOpen
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("strong", {
+        children: "Private Student Notes"
       })]
-    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_tiptap_react__WEBPACK_IMPORTED_MODULE_7__.EditorContent, {
-      editor: editor,
-      style: styles.editorContent
-    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("button", {
-      onClick: saveNoteToServer,
-      style: styles.button,
-      children: "Save Note"
+    }), isOpen && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("div", {
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("div", {
+        style: styles.toolbar,
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("button", {
+          style: styles.button,
+          onClick: () => editor?.chain().focus().toggleBold().run(),
+          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("strong", {
+            children: "B"
+          })
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("button", {
+          style: styles.button,
+          onClick: () => editor?.chain().focus().toggleItalic().run(),
+          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("em", {
+            children: "I"
+          })
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("button", {
+          style: styles.button,
+          onClick: () => editor?.chain().focus().toggleBulletList().run(),
+          children: "\u2022 List"
+        })]
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)(_tiptap_react__WEBPACK_IMPORTED_MODULE_4__.EditorContent, {
+        editor: editor,
+        style: styles.editorContent,
+        className: "editor-content"
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxs)("div", {
+        style: styles.toolbar,
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("button", {
+          onClick: saveNoteToServer,
+          style: styles.button,
+          children: "Save Note"
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)("button", {
+          onClick: printEditorContent,
+          style: styles.button,
+          children: "Print Note"
+        })]
+      })]
     })]
   });
 };
 const styles = {
   editorContainer: {
-    maxWidth: '600px',
+    maxWidth: '800px',
     margin: '0 auto'
   },
   toolbar: {
@@ -30278,7 +30379,7 @@ const styles = {
 const renderEditor = () => {
   const editorElement = document.getElementById('private-student-note-editor');
   if (editorElement) {
-    react_dom__WEBPACK_IMPORTED_MODULE_5___default().render(/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(PrivateStudentNotesEditor, {}), editorElement);
+    react_dom__WEBPACK_IMPORTED_MODULE_2___default().render(/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)(PrivateStudentNotesEditor, {}), editorElement);
   }
 };
 window.addEventListener('load', renderEditor);

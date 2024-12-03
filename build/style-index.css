@@ -7,9 +7,9 @@
  *
  * Replace them with your own styles or remove the file completely.
  */
-.wp-block-vip-learn-private-student-notes {
-  /*margin-block-start: 0 !important;*/
-  border: 1px solid black;
+.wp-block-vip-learn-private-student-notes .editor-content li p {
+  margin-block-start: 0;
+  margin-block-end: 0;
 }
 
 /*# sourceMappingURL=style-index.css.map*/

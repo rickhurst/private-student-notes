@@ -17,14 +17,23 @@ class Private_Student_Notes {
         }
     }
 
+    public function localize_script(){
+        wp_localize_script(
+            'vip-learn-private-student-notes-view-script', // Handle of the script that needs the data
+            'wpApiSettings', // The JavaScript object name
+            array(
+                'nonce' => wp_create_nonce( 'wp_rest' ), // WordPress REST API nonce for security
+            )
+        );
+    }
+
     // Render the content of the block on the front-end
     public static function render_private_student_note_editor( ) {
         if ( ! is_user_logged_in() ) {
             return ''; // Return empty if the user is not logged in
         }
-
         ob_start();
-        include plugin_dir_path( __FILE__ ) . '../templates/notes-editor.php';
+        echo '<div id="private-student-note-editor" class=""></div>';
         return ob_get_clean();
     }
 
@@ -54,7 +63,7 @@ class Private_Student_Notes {
             return new WP_Error('unauthorized', 'User not logged in', ['status' => 401]);
         }
     
-        $note = get_user_meta($user_id, '_private_student_note', true);
+        $note = $this->escape_except_allowed_tags( get_user_meta($user_id, '_private_student_note', true) );
         
         return rest_ensure_response([
             'note' => $note ? $note : '', // Return an empty string if no note exists
@@ -65,7 +74,22 @@ class Private_Student_Notes {
     public function save_note( WP_REST_Request $request ) {
 
         $user_id = get_current_user_id();
-        $note = $request->get_param( 'note' );
+
+        if ( !$user_id ) {
+            return new WP_Error('unauthorized', 'User not logged in', ['status' => 401]);
+        }
+
+        $max_length = 10000; // Set the max length
+
+        $note = $this->sanitize_note_content( $request->get_param( 'note' ) );
+
+        // Check the note length
+        if ( strlen( $note ) > $max_length ) {
+            return new WP_REST_Response( array(
+                'success' => false,
+                'message' => 'Note exceeds the maximum allowed length of ' . $max_length . ' characters.',
+            ), 400 );
+        }
 
         if ( empty( $note ) ) {
             return new WP_Error( 'invalid_data', 'Invalid note data', [ 'status' => 400 ] );
@@ -88,5 +112,54 @@ class Private_Student_Notes {
                 500 
             );
         }
+    }
+
+    /**
+     * @desc sanitizes note content - HTML written into notes will be escaped 
+     * as html entities by the Editor, which we want to keep. The only allowed 
+     * HTML tags which the Editor uses to display the note are the ones in the array below.
+     */
+    private function sanitize_note_content( $content ) {
+        $allowed_tags = array(
+            'p'      => array(),
+            'em'     => array(),
+            'strong' => array(),
+            'ul'     => array(),
+            'li'     => array(),
+        );
+    
+        $sanitized_content =  wp_kses( $content, $allowed_tags );
+
+        // Strip all attributes from the allowed tags
+        $sanitized_content = preg_replace( '/<(p|em|strong|ul|li)\b[^>]*>/', '<$1>', $sanitized_content );
+
+        return $sanitized_content;
+
+    }
+
+    private function escape_except_allowed_tags( $content ) {
+        // Define the allowed tags
+        $allowed_tags = array(
+            'p'      => array(),
+            'em'     => array(),
+            'strong' => array(),
+            'ul'     => array(),
+            'li'     => array(),
+        );
+    
+        // Convert all remaining tags to HTML entities
+        return preg_replace_callback(
+            '/<(\/?)([^>]+)>/',
+            function ( $matches ) use ( $allowed_tags ) {
+                // If the tag is in the allowed list, return it as is
+                $tag_name = strtolower( explode( ' ', $matches[2] )[0] );
+                if ( array_key_exists( $tag_name, $allowed_tags ) ) {
+                    return $matches[0];
+                }
+                // Otherwise, escape the tag
+                return htmlspecialchars( $matches[0] );
+            },
+            $content
+        );
     }
 }

@@ -29,18 +29,11 @@ require "inc/private-student-notes.class.php";
  */
 function vip_learn_private_student_notes_block_init() {
 	
-	new Private_Student_Notes;
+	$psn = new Private_Student_Notes;
 
 	register_block_type( __DIR__ . '/build' );
 
-	// Localize the script to pass the nonce
-	wp_localize_script(
-		'vip-learn-private-student-notes-view-script', // Handle of the script that needs the data
-		'wpApiSettings', // The JavaScript object name
-		array(
-			'nonce' => wp_create_nonce( 'wp_rest' ), // WordPress REST API nonce for security
-		)
-	);
+	$psn->localize_script();
 
 }
 add_action( 'init', 'vip_learn_private_student_notes_block_init' );

@@ -6,6 +6,12 @@
  */
 
 .wp-block-vip-learn-private-student-notes {
-	/*margin-block-start: 0 !important;*/
-	border: 1px solid black;
+	.editor-content {
+		li {
+			p {
+				margin-block-start: 0;
+				margin-block-end: 0;
+			}
+		}
+	}
 }
