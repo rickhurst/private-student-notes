@@ -19,6 +19,11 @@
 		"@wordpress/scripts": "^30.6.0"
 	},
 	"dependencies": {
+		"@tiptap/extension-bold": "^2.10.3",
+		"@tiptap/extension-bullet-list": "^2.10.3",
+		"@tiptap/extension-italic": "^2.10.3",
+		"@tiptap/react": "^2.10.3",
+		"@tiptap/starter-kit": "^2.10.3",
 		"slate": "^0.110.2",
 		"slate-history": "^0.110.3",
 		"slate-hyperscript": "^0.100.0",

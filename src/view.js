@@ -1,92 +1,92 @@
-import { useState, useEffect } from 'react';
-import { RichText } from '@wordpress/block-editor';
+import React, { useEffect } from 'react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Bold from '@tiptap/extension-bold';
+import Italic from '@tiptap/extension-italic';
+import BulletList from '@tiptap/extension-bullet-list';
 import ReactDOM from 'react-dom';
 
-// Define the component
 const PrivateStudentNotesEditor = () => {
-  const [noteContent, setNoteContent] = useState('');
-  const [isLoading, setIsLoading] = useState(true); // Track loading state
+  // Initialize the TipTap editor with desired extensions
+  const editor = useEditor({
+    extensions: [StarterKit, Bold, Italic, BulletList],
+    content: '',
+  });
 
-  // Fetch the saved note content when the component mounts
+  // Fetch the saved note when the component loads
   useEffect(() => {
-    // Fetch the saved note content from the REST API
     fetch('/wp-json/private-student-notes/v1/get-note', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'X-WP-Nonce': wpApiSettings.nonce, // Ensure the nonce is sent for security
+        'X-WP-Nonce': wpApiSettings.nonce, // Include nonce for authentication
       },
     })
       .then(response => response.json())
       .then(data => {
         if (data && data.note) {
-          setNoteContent(data.note); // Set the fetched content into the state
+          editor?.commands.setContent(data.note); // Load note into the editor
         }
       })
-      .catch(error => {
-        console.error('Error fetching note:', error);
-      })
-      .finally(() => {
-        setIsLoading(false); // Stop loading once the data is fetched
-      });
-  }, []); // Empty dependency array to run only on component mount
+      .catch(error => console.error('Error fetching note:', error));
+  }, [editor]);
 
-  // Function to save the note to the server
-  const saveNoteToServer = (newContent) => {
+  // Handle form submission via REST API
+  const saveNoteToServer = () => {
+    const noteContent = editor?.getHTML() || ''; // Get current editor content as HTML
+
     fetch('/wp-json/private-student-notes/v1/save-note', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-WP-Nonce': wpApiSettings.nonce, // Nonce for security
+        'X-WP-Nonce': wpApiSettings.nonce,
       },
-      body: JSON.stringify({
-        note: newContent,
-      }),
+      body: JSON.stringify({ note: noteContent }),
     })
       .then(response => response.json())
       .then(data => {
-        console.log('Note saved:', data);
+        if (data.success) {
+          console.log('Note saved successfully!');
+        } else {
+          console.error('Error saving note:', data);
+        }
       })
-      .catch(error => {
-        console.error('Error saving note:', error);
-      });
+      .catch(error => console.error('Error saving note:', error));
   };
 
-  if (isLoading) {
-    return <div>Loading...</div>; // Show loading text while fetching content
-  }
-
   return (
-    <>
-      <RichText
-        tagName="div"
-        multiline="p"
-        value={noteContent}  // Use state value to manage content
-        onChange={(newContent) => {
-          setNoteContent(newContent);  // Update the state when content changes
-        }}
-        placeholder="Add your private note here..."
-        //allowedFormats={['core/bold', 'core/italic', 'core/link']}
+    <div>
+      {/* Toolbar */}
+      <div style={{ marginBottom: '10px' }}>
+        <button onClick={() => editor?.chain().focus().toggleBold().run()}><strong>B</strong></button>
+        <button onClick={() => editor?.chain().focus().toggleItalic().run()}><em>I</em></button>
+        <button onClick={() => editor?.chain().focus().toggleBulletList().run()}>• List</button>
+      </div>
 
+      {/* Editor */}
+      <EditorContent
+        editor={editor}
+        style={{
+          border: '1px solid #ccc',
+          minHeight: '300px',
+          padding: '10px',
+        }}
       />
-      <button 
-        onClick={() => saveNoteToServer(noteContent)} // Save when the button is clicked
-        className="save-note-button"
-      >
+
+      {/* Save Button */}
+      <button onClick={saveNoteToServer} style={{ marginTop: '10px' }}>
         Save Note
       </button>
-    </>
+    </div>
   );
 };
 
-// Initialize the React component and render it in the placeholder element
+// Render the React component in the placeholder
 const renderEditor = () => {
   const editorElement = document.getElementById('private-student-note-editor');
-  
   if (editorElement) {
-    ReactDOM.render(<PrivateStudentNotesEditor />, editorElement); // Render the component into the placeholder element
+    ReactDOM.render(<PrivateStudentNotesEditor />, editorElement);
   }
 };
 
-// Trigger the rendering on page load
 window.addEventListener('load', renderEditor);

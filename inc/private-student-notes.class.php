@@ -71,8 +71,22 @@ class Private_Student_Notes {
             return new WP_Error( 'invalid_data', 'Invalid note data', [ 'status' => 400 ] );
         }
 
-        update_user_meta( $user_id, '_private_student_note', $note );
-
-        return new WP_REST_Response( 'Note saved successfully', 200 );
+        if( update_user_meta( $user_id, '_private_student_note', $note ) ) {
+            return new WP_REST_Response( 
+                [
+                    'success' => true,
+                    'message' => 'Note saved successfully'
+                ], 
+                200 
+            );
+        } else {
+            return new WP_REST_Response( 
+                [
+                    'success' => false,
+                    'message' => 'Failed to save the note.'
+                ], 
+                500 
+            );
+        }
     }
 }
